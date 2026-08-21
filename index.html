@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LibGen Browser</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; padding: 0; }
+    body { line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    img, picture, video, canvas, svg { display: block; max-width: 100%; }
+    input, button, textarea, select { font: inherit; }
+    p, h1, h2, h3, h4, h5, h6 { overflow-wrap: break-word; }
+    :root {
+      --primary: #3b82f6; --primary-hover: #2563eb;
+      --bg-main: #0f172a; --bg-card: #1e293b;
+      --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155;
+      --badge-libgen-bg: rgba(220,38,38,0.2); --badge-libgen-txt: #fca5a5;
+      --radius-sm: 8px; --radius-md: 16px; --radius-pill: 99px;
+      --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.3);
+      --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.4);
+      --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    body { background: var(--bg-main); color: var(--text-main); font-family: var(--font-sans); min-height: 100vh; padding-bottom: 100px; }
+    .app-header { background: var(--bg-card); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+    .header-container { max-width: 1200px; margin: 0 auto; padding: 1rem; display: flex; justify-content: center; align-items: center; }
+    .logo { font-size: 1.5rem; font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+    .search-hero { text-align: center; max-width: 700px; margin: 0 auto 2rem; }
+    .search-hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .search-hero p { color: var(--text-muted); margin-bottom: 1.5rem; }
+    .search-box-wrapper { position: relative; margin-bottom: 1.5rem; }
+    .search-input-group { display: flex; align-items: center; background: var(--bg-card); border: 2px solid var(--border); border-radius: var(--radius-pill); padding: 4px 6px 4px 16px; box-shadow: var(--shadow-sm); transition: 0.2s; overflow: hidden; }
+    .search-input-group:focus-within { border-color: var(--primary); }
+    #search-input { flex: 1; border: none; outline: none; background: transparent; font-size: 1rem; color: var(--text-main); min-width: 0; }
+    .search-icon { color: var(--text-muted); margin-right: 12px; flex-shrink: 0; }
+    .clear-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0 10px; flex-shrink: 0; }
+    .search-btn { background: var(--primary); color: #fff; border: none; border-radius: var(--radius-pill); padding: 10px 20px; font-weight: 600; margin-left: 4px; cursor: pointer; transition: 0.2s; flex-shrink: 0; white-space: nowrap; }
+    .search-btn:hover { background: var(--primary-hover); }
+    .radio-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .pill input { display: none; }
+    .pill span { padding: 6px 14px; border-radius: var(--radius-pill); background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .pill input:checked + span { background: var(--border); color: white; border-color: var(--text-muted); }
+    .filter-select { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 6px 12px; border-radius: var(--radius-pill); font-size: 0.85rem; cursor: pointer; }
+    .filters-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; margin-top: 1rem; }
+    .book-grid { display: grid; gap: 1rem; }
+    .book-card { background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; flex-direction: row; overflow: hidden; box-shadow: var(--shadow-sm); align-items: stretch; transition: border-color 0.2s; }
+    .book-card:hover { border-color: var(--primary); }
+    .book-cover { width: 110px; min-width: 110px; background: #0f172a; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .book-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .book-cover-placeholder { width: 100%; height: 140px; display: flex; align-items: center; justify-content: center; color: var(--border); font-size: 2rem; }
+    .book-details { padding: 14px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .book-details-inner { flex: 1; }
+    .badge { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: var(--radius-pill); margin-bottom: 8px; display: inline-block; letter-spacing: 0.5px; }
+    .badge-libgen { background: var(--badge-libgen-bg); color: var(--badge-libgen-txt); }
+    .badge-format { background: rgba(99,102,241,0.2); color: #a5b4fc; margin-left: 4px; }
+    .book-title { font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+    .book-author { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .book-publisher { font-size: 0.8rem; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .book-meta { font-size: 0.78rem; color: #64748b; margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-action { margin-top: 10px; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: var(--primary); color: white; padding: 10px; border-radius: var(--radius-sm); text-decoration: none; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+    .btn-action:hover { background: var(--primary-hover); }
+    .btn-action-secondary { background: rgba(59,130,246,0.12); color: var(--primary); border: 1px solid rgba(59,130,246,0.3); margin-top: 6px; }
+    .btn-action-secondary:hover { background: rgba(59,130,246,0.22); }
+    .bottom-dock { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(30,41,59,0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-pill); display: flex; padding: 6px; gap: 4px; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.5); max-width: 90%; }
+    .dock-btn { background: transparent; border: none; color: var(--text-muted); padding: 10px 20px; border-radius: var(--radius-pill); font-size: 0.95rem; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+    .dock-btn:hover { color: var(--text-main); }
+    .dock-btn.active { background: rgba(255,255,255,0.1); color: var(--primary); }
+    .hidden { display: none !important; }
+    .view { display: none; padding: 2rem 1rem; max-width: 900px; margin: 0 auto; }
+    .view.active { display: block; }
+    .loader-container { text-align: center; padding: 3rem 0; }
+    .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-bar-wrapper { max-width: 400px; height: 4px; background: var(--border); border-radius: var(--radius-pill); margin: 12px auto; overflow: hidden; }
+    .progress-bar { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s ease; }
+    .progress-label { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem; }
+    .empty-state { text-align: center; color: var(--text-muted); padding: 4rem 1rem; }
+    .empty-state i { font-size: 3rem; opacity: 0.3; margin-bottom: 1rem; display: block; }
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-muted); flex-wrap: wrap; gap: 8px; }
+    .load-more-btn { display: block; margin: 2rem auto 0; padding: 12px 32px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-pill); cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .load-more-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .history-title-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .btn-secondary { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 6px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .error-box { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.3); border-radius: var(--radius-md); padding: 1.5rem; text-align: center; color: #fca5a5; }
+    .error-box i { font-size: 2rem; margin-bottom: 0.5rem; display: block; }
+    .info-banner { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.82rem; color: #93c5fd; margin-bottom: 1.2rem; display: flex; align-items: flex-start; gap: 8px; }
+    @media (min-width: 640px) { .book-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 1024px) { .book-grid { grid-template-columns: repeat(3, 1fr); } .book-cover { width: 130px; min-width: 130px; } }
+    @media (max-width: 480px) {
+      .search-hero h1 { font-size: 1.8rem; }
+      .pill span { padding: 5px 10px; font-size: 0.8rem; }
+      .book-cover { width: 95px; min-width: 95px; }
+      .book-title { font-size: 1rem; }
+      .dock-btn { padding: 10px 14px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-container">
+    <div class="logo">
+      <i class="fa-solid fa-book-open-reader" style="color:var(--primary)"></i>
+      LibGen Browser
+    </div>
+  </div>
+</header>
+
+<!-- SEARCH VIEW -->
+<div id="view-search" class="view active">
+  <div class="search-hero">
+    <h1>Find Any Book</h1>
+    <p>Search millions of books via the LibGen database</p>
+    <div class="search-box-wrapper">
+      <div class="search-input-group">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="search-input" placeholder="Search title, author, ISBN…" autocomplete="off" />
+        <button class="clear-btn hidden" id="clear-btn"><i class="fa-solid fa-xmark"></i></button>
+        <button class="search-btn" id="search-btn">Search</button>
+      </div>
+    </div>
+    <div class="radio-pills">
+      <label class="pill"><input type="radio" name="stype" value="title" checked /><span>Title</span></label>
+      <label class="pill"><input type="radio" name="stype" value="author" /><span>Author</span></label>
+      <label class="pill"><input type="radio" name="stype" value="publisher" /><span>Publisher</span></label>
+      <label class="pill"><input type="radio" name="stype" value="series" /><span>Series</span></label>
+    </div>
+    <div class="filters-row">
+      <select class="filter-select" id="topic-filter">
+        <option value="">All Topics</option>
+        <option value="l">Non-fiction</option>
+        <option value="f">Fiction</option>
+        <option value="r">Russian Fiction</option>
+        <option value="m">Magazines</option>
+        <option value="c">Comics</option>
+        <option value="a">Articles</option>
+        <option value="s">Standards</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="loader-container hidden" id="loader">
+    <div class="spinner"></div>
+    <div class="progress-bar-wrapper"><div class="progress-bar" id="progress-bar"></div></div>
+    <p class="progress-label" id="progress-label">Searching LibGen…</p>
+  </div>
+
+  <div id="results-section" class="hidden">
+    <div class="info-banner hidden" id="info-banner">
+      <i class="fa-solid fa-circle-info" style="margin-top:2px;flex-shrink:0"></i>
+      <span id="info-banner-text"></span>
+    </div>
+    <div class="results-header">
+      <span id="results-count"></span>
+    </div>
+    <div class="book-grid" id="book-grid"></div>
+    <button class="load-more-btn hidden" id="load-more-btn">Load more</button>
+  </div>
+
+  <div class="empty-state hidden" id="empty-state">
+    <i class="fa-solid fa-ghost"></i>
+    <p id="empty-msg">No results found. Try a different search.</p>
+  </div>
+</div>
+
+<!-- RECENT VIEW -->
+<div id="view-recent" class="view">
+  <div class="search-hero">
+    <h1>Recently Added</h1>
+    <p>Latest files added to LibGen</p>
+    <div class="filters-row" style="margin-top:0">
+      <select class="filter-select" id="recent-mode">
+        <option value="last">Last Added</option>
+        <option value="modified">Last Modified</option>
+      </select>
+      <select class="filter-select" id="recent-topic">
+        <option value="">All Topics</option>
+        <option value="l">Non-fiction</option>
+        <option value="f">Fiction</option>
+        <option value="m">Magazines</option>
+        <option value="c">Comics</option>
+        <option value="a">Articles</option>
+      </select>
+      <select class="filter-select" id="recent-limit">
+        <option value="25">25</option>
+        <option value="50" selected>50</option>
+        <option value="100">100</option>
+      </select>
+      <button class="search-btn" id="recent-load-btn" style="border-radius:var(--radius-pill);padding:8px 20px">Load</button>
+    </div>
+  </div>
+  <div class="loader-container hidden" id="recent-loader">
+    <div class="spinner"></div>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.5rem">Fetching…</p>
+  </div>
+  <div class="book-grid" id="recent-grid"></div>
+  <div class="empty-state" id="recent-empty">
+    <i class="fa-solid fa-fire"></i>
+    <p>Press Load to fetch recent books.</p>
+  </div>
+</div>
+
+<!-- HISTORY VIEW -->
+<div id="view-history" class="view">
+  <div class="history-title-wrap">
+    <h2 style="font-weight:800;font-size:1.5rem">Search History</h2>
+    <button class="btn-secondary" id="clear-history-btn">Clear All</button>
+  </div>
+  <div id="history-list"></div>
+  <div class="empty-state hidden" id="history-empty">
+    <i class="fa-solid fa-clock-rotate-left"></i>
+    <p>No searches yet.</p>
+  </div>
+</div>
+
+<!-- DOCK -->
+<nav class="bottom-dock">
+  <button class="dock-btn active" data-view="search"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+  <button class="dock-btn" data-view="recent"><i class="fa-solid fa-fire"></i> Recent</button>
+  <button class="dock-btn" data-view="history"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
+</nav>
+
+<script>
+  const API_BASE = 'https://gitlib-backend.onrender.com/api';
+
+  // ── STATE ──────────────────────────────────────────────────
+  let lgHistory = JSON.parse(localStorage.getItem('lgHistory') || '[]');
+  let allMatches   = [];   // filtered results from current search
+  let displayedCount = 0;
+  const PAGE_SIZE  = 25;
+
+  // ── NAV ────────────────────────────────────────────────────
+  document.querySelectorAll('.dock-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+      if (btn.dataset.view === 'history') renderHistory();
+    });
+  });
+
+  // ── SEARCH INPUT ───────────────────────────────────────────
+  const searchInput = document.getElementById('search-input');
+  const clearBtn    = document.getElementById('clear-btn');
+
+  searchInput.addEventListener('input', () => {
+    clearBtn.classList.toggle('hidden', !searchInput.value);
+  });
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.classList.add('hidden');
+    searchInput.focus();
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('empty-state').classList.add('hidden');
+  });
+  document.getElementById('search-btn').addEventListener('click', startSearch);
+  searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') startSearch(); });
+
+  // ── SEARCH ─────────────────────────────────────────────────
+  async function startSearch() {
+    const query = searchInput.value.trim();
+    if (!query) return;
+
+    const stype = document.querySelector('input[name="stype"]:checked').value;
+    const topic = document.getElementById('topic-filter').value;
+
+    saveHistory(query, stype);
+    showLoader(true, 'Connecting to LibGen…');
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('info-banner').classList.add('hidden');
+    animateProgress(0, 30);
+
+    try {
+      /*
+       * STRATEGY: LibGen JSON API has no keyword search.
+       * We use the "editions" object (object=e) which has title/author
+       * fields, fetch up to 10,000 records in batches, and filter client-side.
+       * Batching: fetch 3 rounds of limit=500 (offsets 0, 500, 1000) in parallel
+       * to cast a wide net quickly, then filter.
+       */
+      const BATCH   = 500;
+      const ROUNDS  = 6;   // 6 × 500 = 3000 records scanned per search
+      const fieldMap = {
+        title:     'title',
+        author:    'author',
+        publisher: 'publisher',
+        series:    'series',
+      };
+      const apiField = fieldMap[stype] || 'title';
+      const q = query.toLowerCase();
+
+      setProgressLabel('Fetching records from LibGen…');
+      animateProgress(30, 60);
+
+      // Build batch requests
+      const requests = Array.from({ length: ROUNDS }, (_, i) => {
+        const params = new URLSearchParams({
+          object: 'e',   // editions — has title, author, publisher, series
+          fields: 'id,title,author,year,publisher,series,language,md5,coverurl,extension,filesize,pages',
+          limit1: i * BATCH,
+          limit2: BATCH,
+        });
+        if (topic) params.set('topic', topic);
+        return fetch(`${API_BASE}?${params}`).then(r => r.json()).catch(() => []);
+      });
+
+      const batches = await Promise.all(requests);
+      animateProgress(60, 90);
+      setProgressLabel('Filtering results…');
+
+      // Flatten, dedupe by id, filter
+      const seen = new Set();
+      const pool = [];
+      for (const batch of batches) {
+        const arr = Array.isArray(batch) ? batch : Object.values(batch);
+        for (const item of arr) {
+          if (!item.id || seen.has(item.id)) continue;
+          seen.add(item.id);
+          pool.push(item);
+        }
+      }
+
+      allMatches = pool.filter(b => (b[apiField] || '').toLowerCase().includes(q));
+
+      finishProgress();
+      showLoader(false);
+
+      if (allMatches.length === 0) {
+        // Show how many records we scanned so user knows it really searched
+        document.getElementById('empty-msg').textContent =
+          `No results for "${query}" in ${pool.length.toLocaleString()} scanned records. Try broader terms or a different topic.`;
+        document.getElementById('empty-state').classList.remove('hidden');
+        return;
+      }
+
+      displayedCount = 0;
+      document.getElementById('book-grid').innerHTML = '';
+      document.getElementById('results-section').classList.remove('hidden');
+
+      // Show info banner if pool was smaller than expected (libgen returned fewer)
+      if (pool.length < ROUNDS * BATCH) {
+        document.getElementById('info-banner-text').textContent =
+          `LibGen returned ${pool.length.toLocaleString()} total records for this topic/filter.`;
+        document.getElementById('info-banner').classList.remove('hidden');
+      }
+
+      showNextPage(query);
+
+    } catch (err) {
+      showLoader(false);
+      showError(err.message);
+    }
+  }
+
+  function showNextPage(label) {
+    const q = label || searchInput.value.trim();
+    const slice = allMatches.slice(displayedCount, displayedCount + PAGE_SIZE);
+    renderBooks(slice, 'book-grid', false);
+    displayedCount += slice.length;
+
+    document.getElementById('results-count').textContent =
+      `Showing ${displayedCount} of ${allMatches.length} results for "${q}"`;
+    document.getElementById('load-more-btn').classList.toggle('hidden', displayedCount >= allMatches.length);
+  }
+
+  document.getElementById('load-more-btn').addEventListener('click', () => showNextPage());
+
+  // ── RECENT ─────────────────────────────────────────────────
+  document.getElementById('recent-load-btn').addEventListener('click', async () => {
+    const mode  = document.getElementById('recent-mode').value;
+    const topic = document.getElementById('recent-topic').value;
+    const limit = document.getElementById('recent-limit').value;
+
+    document.getElementById('recent-loader').classList.remove('hidden');
+    document.getElementById('recent-grid').innerHTML = '';
+    document.getElementById('recent-empty').classList.add('hidden');
+
+    try {
+      const params = new URLSearchParams({
+        object: 'f',
+        mode,
+        fields: 'id,title,author,year,publisher,md5,coverurl,extension,filesize,pages',
+        limit1: 0,
+        limit2: limit,
+      });
+      if (topic) params.set('topic', topic);
+
+      const res  = await fetch(`${API_BASE}?${params}`);
+      if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+      const raw  = await res.json();
+      const data = Array.isArray(raw) ? raw : Object.values(raw);
+
+      document.getElementById('recent-loader').classList.add('hidden');
+      if (!data.length) { document.getElementById('recent-empty').classList.remove('hidden'); return; }
+      renderBooks(data, 'recent-grid', true);
+    } catch (err) {
+      document.getElementById('recent-loader').classList.add('hidden');
+      document.getElementById('recent-grid').innerHTML =
+        `<div class="error-box"><i class="fa-solid fa-triangle-exclamation"></i>${esc(err.message)}</div>`;
+    }
+  });
+
+  // ── RENDER ─────────────────────────────────────────────────
+  function renderBooks(books, gridId, clear) {
+    const grid = document.getElementById(gridId);
+    if (clear) grid.innerHTML = '';
+
+    books.forEach(b => {
+      const title  = b.title     || 'Unknown Title';
+      const author = b.author    || 'Unknown Author';
+      const year   = b.year      || '';
+      const pub    = b.publisher || '';
+      const ext    = (b.extension || '').toUpperCase();
+      const md5    = b.md5       || '';
+      const size   = b.filesize  ? fmtSize(b.filesize) : '';
+      const pages  = b.pages     ? `${b.pages} pp` : '';
+      const cover  = b.coverurl  || '';
+
+      const coverHtml = cover
+        ? `<img src="https://libgen.li/covers/${cover}" alt="" loading="lazy"
+               onerror="this.outerHTML='<div class=\\'book-cover-placeholder\\'><i class=\\'fa-solid fa-book\\'></i></div>'">`
+        : `<div class="book-cover-placeholder"><i class="fa-solid fa-book"></i></div>`;
+
+      const card = document.createElement('div');
+      card.className = 'book-card';
+      card.innerHTML = `
+        <div class="book-cover">${coverHtml}</div>
+        <div class="book-details">
+          <div class="book-details-inner">
+            <span class="badge badge-libgen">LibGen</span>${ext ? `<span class="badge badge-format">${ext}</span>` : ''}
+            <div class="book-title" title="${esc(title)}">${esc(title)}</div>
+            <div class="book-author"><i class="fa-solid fa-user fa-xs"></i> ${esc(author)}</div>
+            ${pub   ? `<div class="book-publisher"><i class="fa-solid fa-building fa-xs"></i> ${esc(pub)}</div>` : ''}
+            <div class="book-meta">
+              ${year  ? `<span>${esc(year)}</span>`  : ''}
+              ${pages ? `<span>${pages}</span>` : ''}
+              ${size  ? `<span>${size}</span>`  : ''}
+            </div>
+          </div>
+          ${md5 ? `<a class="btn-action" href="https://libgen.li/ads.php?md5=${md5}" target="_blank" rel="noopener"><i class="fa-solid fa-download"></i> Download</a>` : ''}
+          ${md5 ? `<a class="btn-action btn-action-secondary" href="https://libgen.li/file.php?md5=${md5}" target="_blank" rel="noopener"><i class="fa-solid fa-circle-info"></i> Details</a>` : ''}
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  // ── HISTORY ────────────────────────────────────────────────
+  function saveHistory(query, type) {
+    lgHistory = lgHistory.filter(h => h.query !== query);
+    lgHistory.unshift({ query, type, time: Date.now() });
+    if (lgHistory.length > 50) lgHistory.pop();
+    localStorage.setItem('lgHistory', JSON.stringify(lgHistory));
+  }
+  function renderHistory() {
+    const list  = document.getElementById('history-list');
+    const empty = document.getElementById('history-empty');
+    list.innerHTML = '';
+    if (!lgHistory.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    lgHistory.forEach(h => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer';
+      row.innerHTML = `
+        <i class="fa-solid fa-clock-rotate-left" style="color:var(--text-muted);width:16px;flex-shrink:0"></i>
+        <span style="flex:1;font-weight:500">${esc(h.query)}</span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">${h.type}</span>
+        <span style="font-size:0.75rem;color:var(--text-muted)">${timeAgo(h.time)}</span>`;
+      row.addEventListener('click', () => {
+        searchInput.value = h.query;
+        document.querySelector(`input[name="stype"][value="${h.type}"]`).checked = true;
+        document.querySelectorAll('.dock-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelector('[data-view="search"]').classList.add('active');
+        document.getElementById('view-search').classList.add('active');
+        startSearch();
+      });
+      list.appendChild(row);
+    });
+  }
+  document.getElementById('clear-history-btn').addEventListener('click', () => {
+    lgHistory = [];
+    localStorage.setItem('lgHistory', '[]');
+    renderHistory();
+  });
+
+  // ── UTILS ──────────────────────────────────────────────────
+  function showLoader(on, label) {
+    document.getElementById('loader').classList.toggle('hidden', !on);
+    if (label) setProgressLabel(label);
+  }
+  function setProgressLabel(txt) {
+    document.getElementById('progress-label').textContent = txt;
+  }
+  function showError(msg) {
+    document.getElementById('book-grid').innerHTML =
+      `<div class="error-box" style="grid-column:1/-1"><i class="fa-solid fa-triangle-exclamation"></i><strong>Error:</strong> ${esc(msg)}</div>`;
+    document.getElementById('results-section').classList.remove('hidden');
+  }
+  function fmtSize(bytes) {
+    const mb = bytes / 1048576;
+    return mb < 1 ? Math.round(bytes / 1024) + ' KB' : mb.toFixed(1) + ' MB';
+  }
+  function timeAgo(ts) {
+    const m = Math.floor((Date.now() - ts) / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  }
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  let progressInterval = null;
+  function animateProgress(from, to) {
+    clearInterval(progressInterval);
+    const bar = document.getElementById('progress-bar');
+    let w = from;
+    bar.style.width = w + '%';
+    progressInterval = setInterval(() => {
+      w = Math.min(w + Math.random() * 3, to);
+      bar.style.width = w + '%';
+      if (w >= to) clearInterval(progressInterval);
+    }, 120);
+  }
+  function finishProgress() {
+    clearInterval(progressInterval);
+    document.getElementById('progress-bar').style.width = '100%';
+  }
+</script>
+</body>
+</html>
