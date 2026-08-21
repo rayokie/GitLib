@@ -1,0 +1,28 @@
+:root {
+  /* Dark Mode Palette */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --bg-main: #0f172a;
+  --bg-card: #1e293b;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  
+  /* Badges adapted for dark mode */
+  --badge-libgen-bg: rgba(220, 38, 38, 0.2); --badge-libgen-txt: #fca5a5;
+  --badge-guten-bg: rgba(22, 163, 74, 0.2); --badge-guten-txt: #86efac;
+  --badge-open-bg: rgba(202, 138, 4, 0.2); --badge-open-txt: #fde047;
+  --badge-goog-bg: rgba(2, 132, 199, 0.2); --badge-goog-txt: #7dd3fc;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-pill: 99px;
+  
+  --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.3);
+  --shadow-md: 0 10px 15px -3px rgba(0,0,0,0.4);
+  
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body { background-color: var(--bg-main); color: var(--text-main); font-family: var(--font-sans); min-height: 100vh; padding-bottom: 80px; }
+
