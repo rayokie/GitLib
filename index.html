@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GitLib — Find Any Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+<!-- Conversion & Downloading Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/epubjs/0.3.88/epub.min.js"></script>
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============================= SPLASH SCREEN ============================= -->
+<div class="splash" id="splash">
+  <div class="splash-glow"></div>
+  <svg class="splash-logo" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true">
+    <path d="M160 96a96 96 0 1 1 192 0A96 96 0 1 1 160 96zm80 152V512l-48.4-24.2c-20.9-10.4-43.5-17-66.8-19.3l-96-9.6C12.5 457.2 0 443.5 0 427.1V128c0-14.3 10.1-26.6 24.2-29.4l79.4-15.9c37-7.4 75-7.4 112 0l34.8 7c7.4 1.5 15.1 1.5 22.5 0l34.8-7c37-7.4 75-7.4 112 0l79.4 15.9c14.1 2.8 24.2 15.1 24.2 29.4v299.1c0 16.4-12.5 30.1-28.8 31.8l-96 9.6c-23.2 2.3-45.9 8.9-66.8 19.3L288 512V248a8 8 0 0 0 -8-8h-32a8 8 0 0 0 -8 8z"/>
+  </svg>
+  <div class="splash-word">GitLib</div>
+  <div class="splash-rule"></div>
+  <div class="splash-tag">Search · Read · Learn</div>
+</div>
+
+<!-- ============================= TOAST NOTIFICATIONS ============================= -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ============================= APP ============================= -->
+<div class="app" id="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true">
+        <path d="M160 96a96 96 0 1 1 192 0A96 96 0 1 1 160 96zm80 152V512l-48.4-24.2c-20.9-10.4-43.5-17-66.8-19.3l-96-9.6C12.5 457.2 0 443.5 0 427.1V128c0-14.3 10.1-26.6 24.2-29.4l79.4-15.9c37-7.4 75-7.4 112 0l34.8 7c7.4 1.5 15.1 1.5 22.5 0l34.8-7c37-7.4 75-7.4 112 0l79.4 15.9c14.1 2.8 24.2 15.1 24.2 29.4v299.1c0 16.4-12.5 30.1-28.8 31.8l-96 9.6c-23.2 2.3-45.9 8.9-66.8 19.3L288 512V248a8 8 0 0 0 -8-8h-32a8 8 0 0 0 -8 8z"/>
+      </svg>
+      <span>GitLib <small class="by-rayees">by Rayees</small></span>
+    </div>
+  </header>
+
+  <main>
+    <!-- ---------------- SEARCH VIEW ---------------- -->
+    <section id="view-search" class="view active">
+      <div class="hero">
+        <h1>Find any book</h1>
+        <p>Searches Project Gutenberg, Open Library &amp; Google Books at once</p>
+      </div>
+
+      <div class="search-wrap">
+        <div class="search-bar glass">
+          <i class="fa-solid fa-magnifying-glass icon-search"></i>
+          <input type="text" id="search-input" placeholder="Try a title, author, or ISBN…" autocomplete="off" spellcheck="false" />
+          <button class="icon-btn hidden" id="clear-btn"><i class="fa-solid fa-xmark"></i></button>
+          <button class="go-btn" id="search-btn">Search</button>
+        </div>
+        <div class="suggest-panel glass" id="suggest-panel"></div>
+      </div>
+
+      <!-- SOURCE SELECTION DROPDOWN -->
+      <div class="source-select-wrap">
+        <select class="source-dropdown" id="source-mode-select">
+          <option value="auto">⚡ Auto (All Sources)</option>
+          <option value="gutendex">📜 Project Gutenberg</option>
+          <option value="openlibrary">🏛️ Open Library</option>
+          <option value="google">📘 Google Books</option>
+        </select>
+      </div>
+
+      <div class="results-meta hidden" id="results-meta">
+        <span id="results-count"></span>
+        <div class="legend">
+          <span><span class="dot dot-gutendex"></span>Gutenberg</span>
+          <span><span class="dot dot-openlibrary"></span>Open Library</span>
+          <span><span class="dot dot-google"></span>Google Books</span>
+        </div>
+      </div>
+
+      <div class="loader" id="search-loader">
+        <div class="spinner"></div>
+        <p>Searching every shelf…</p>
+      </div>
+
+      <div class="grid" id="results-grid"></div>
+      <button class="load-more glass hidden" id="load-more">Load more results</button>
+
+      <div class="empty" id="empty-search">
+        <i class="fa-solid fa-ghost"></i>
+        <p>No matches yet. Try different words, or switch sources above.</p>
+      </div>
+    </section>
+
+    <!-- ---------------- TRENDING VIEW ---------------- -->
+    <section id="view-trending" class="view">
+      <div class="hero">
+        <h1>Trending on Gutenberg</h1>
+        <p>The most-read free public-domain books right now</p>
+      </div>
+      <div class="section-head" style="justify-content:center;margin-bottom:20px">
+        <button class="btn-danger-ghost" id="trending-refresh" style="color:var(--cyan);border-color:rgba(61,199,244,0.4)"><i class="fa-solid fa-rotate"></i>&nbsp; Refresh</button>
+      </div>
+      <div class="loader" id="trending-loader">
+        <div class="spinner"></div>
+        <p>Fetching popular titles…</p>
+      </div>
+      <div class="grid" id="trending-grid"></div>
+      <div class="empty" id="empty-trending">
+        <i class="fa-solid fa-fire"></i>
+        <p>Couldn't load trending titles. Tap refresh to try again.</p>
+      </div>
+    </section>
+
+    <!-- ---------------- HISTORY VIEW ---------------- -->
+    <section id="view-history" class="view">
+      <div class="section-head">
+        <h2>Search history</h2>
+        <button class="btn-danger-ghost" id="clear-history-btn">Clear all</button>
+      </div>
+      <div class="row-list glass" id="history-list"></div>
+      <div class="empty" id="empty-history">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <p>Nothing searched yet — your queries will show up here.</p>
+      </div>
+    </section>
+
+    <!-- ---------------- LIBRARY VIEW ---------------- -->
+    <section id="view-library" class="view">
+      <div class="section-head">
+        <h2>Your library</h2>
+        <button class="btn-danger-ghost" id="clear-library-btn">Clear all</button>
+      </div>
+      <div class="row-list glass" id="library-list"></div>
+      <div class="empty" id="empty-library">
+        <i class="fa-solid fa-bookmark"></i>
+        <p>Books you download will be saved here for quick access.</p>
+      </div>
+    </section>
+
+    <!-- ---------------- DOWNLOADS QUEUE VIEW ---------------- -->
+    <section id="view-downloads" class="view">
+      <div class="section-head">
+        <h2>Active Downloads Queue</h2>
+        <button class="btn-danger-ghost" id="clear-queue-btn">Clear queue</button>
+      </div>
+      <div class="row-list glass" id="downloads-queue-list"></div>
+      <div class="empty" id="empty-downloads">
+        <i class="fa-solid fa-download"></i>
+        <p>No active background downloads right now.</p>
+      </div>
+    </section>
+
+    <!-- ---------------- SUBTLE CREDIT FOOTER ---------------- -->
+    <footer class="credits-footer">
+      <div class="credits-inner">
+        <p>GitLib Engine Powered by Open APIs &amp; Open Source Projects</p>
+        <a href="https://github.com/elementdavv/internet_archive_downloader" target="_blank" rel="noopener" class="github-credit-link">
+          <i class="fa-brands fa-github"></i>
+          <span>internet_archive_downloader by elementdavv</span>
+        </a>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ============================= DOCK ============================= -->
+  <nav class="dock">
+    <button class="dock-btn active" data-view="search"><i class="fa-solid fa-magnifying-glass"></i><span>Search</span></button>
+    <button class="dock-btn" data-view="trending"><i class="fa-solid fa-fire"></i><span>Trending</span></button>
+    <button class="dock-btn" data-view="history"><i class="fa-solid fa-clock-rotate-left"></i><span>History</span></button>
+    <button class="dock-btn" data-view="library"><i class="fa-solid fa-bookmark"></i><span>Library</span></button>
+    <button class="dock-btn" data-view="downloads" id="dock-btn-downloads">
+      <i class="fa-solid fa-download"></i>
+      <span>Downloads</span>
+      <span class="dl-badge hidden" id="dl-badge"></span>
+    </button>
+  </nav>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
